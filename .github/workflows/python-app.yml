@@ -26,7 +26,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --noconsole --collect-all customtkinter --name="QuickDraw" src/mainUI.py
+          pyinstaller --noconsole --collect-all customtkinter --name="Quick Sketcher" src/mainUI.py
 
       # Windows: Zip the dist/QuickDraw folder
       - name: Zip Windows Release

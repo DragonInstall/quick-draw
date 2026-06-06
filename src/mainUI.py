@@ -391,7 +391,9 @@ class QuickDrawApp(ctk.CTk):
         self.attributes('-topmost', True)
         self.after(1000, lambda: self.attributes('-topmost', False))
 
-if __name__ == "__main__":
+def main():
     app = QuickDrawApp()
     app.pre_session_ui()
     app.mainloop()
+if __name__ == "__main__":
+    main()

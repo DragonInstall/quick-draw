@@ -4,17 +4,20 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk, ImageOps
 
+# ---- ROOT ----
 root=tk.Tk()
 root.title("Quick Draw")
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-app_width = int(screen_width * (2/3))
-app_height = screen_height
-root.geometry(f"{app_width}x{app_height}")
+app_width = int(screen_width * 0.75)
+app_height = int(app_width * (9 / 16))
+x = int((screen_width / 2) - (app_width / 2))
+y = int((screen_height / 2) - (app_height / 2))
+root.geometry(f"{app_width}x{app_height}+{x}+{y}")
 root.lift()
-central_frame = tk.Frame(root)
-central_frame.pack(side="top", pady=10)
 
+
+# ---- GLOBALS ----
 INDEX=0
 FONT_SIZE=14
 FONT_TYPE= "Arial"
@@ -25,17 +28,19 @@ TIME_LEFT=0
 IMAGE_AMOUNT=1
 FOLDER_IMAGES=[]
 
-#global labels
-image_time_clicked= tk.StringVar()
-image_num_clicked= tk.StringVar()
-current_image_label=tk.Label(root)
-which_image_label=tk.Label(central_frame)
-timer_label=tk.Label()
-folder_label=tk.Label()
-end_session_button=tk.Button()
 
+# ---- WIDGETS ----
+image_time_clicked = tk.StringVar()
+image_num_clicked = tk.StringVar()
+central_frame = tk.Frame(root)
+current_image_label = tk.Label(root)
+which_image_label = tk.Label(root)
+timer_label = tk.Label(root)
+folder_label = tk.Label(root)
 
-image_time_dict={"10 seconds": 10,
+# ---- DICTIONARIES ----
+image_time_dict={
+                 "10 seconds": 10,
                  "30 seconds": 30,
                  "1 minute"  : 60,
                  "2 minutes" : 120,
@@ -44,56 +49,63 @@ image_time_dict={"10 seconds": 10,
                  "15 minutes": 900,
                  "30 minutes": 1800,
                  "1 hour"    : 3600,
-                 }
+}
 
 image_num_dict={
-    "1 image"   :1,
-    "10 images" :10,
-    "15 images" :15,
-    "20 images" :20,
-    "30 images" :30,
-    "40 images" :40,
-    "50 images" :50,
-    "60 images" :60,
-    "120 images":120,
+                 "1 image"   :1,
+                 "10 images" :10,
+                 "15 images" :15,
+                 "20 images" :20,
+                 "30 images" :30,
+                 "40 images" :40,
+                 "50 images" :50,
+                 "60 images" :60,
+                 "120 images":120,
 }
+
+
+# ---- FUNCTIONS ----
 def get_folder():
     global FOLDER_PATH,folder_label
-    FOLDER_PATH = filedialog.askdirectory(title="Choose a folder")
-    folder_label.config(text=f"{FOLDER_PATH}")
+    temp_path = filedialog.askdirectory(title="Choose a folder")
+    if temp_path != "":
+        FOLDER_PATH = temp_path
+    folder_label.config(text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
+
 
 def pre_session_ui():
-    global image_time_dict,image_num_dict,INDEX,folder_label,SESSION_RUNNING,TIME_LEFT
-    SESSION_RUNNING=False
+    global image_time_dict, image_num_dict, INDEX, folder_label, SESSION_RUNNING, TIME_LEFT
+
+    SESSION_RUNNING = False
+    TIME_LEFT = 0
+    INDEX = 0
+
     for widget in root.winfo_children():
         widget.destroy()
-    TIME_LEFT=0
 
-    #reset index for new session
-    INDEX=0
-    #choose a file path
     browse_button = tk.Button(root, text="Browse", command=get_folder, font=(FONT_TYPE, FONT_SIZE))
     browse_button.pack(pady=10)
 
     folder_label = tk.Label(root, text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
-    folder_label.pack()
+    folder_label.pack(pady=(0,10))
 
-    #choose view time per image
     if image_time_clicked.get() == "":
         image_time_clicked.set(list(image_time_dict.keys())[0])
-    image_time_dropdown = tk.OptionMenu(root, image_time_clicked, *image_time_dict)
-    image_time_dropdown.pack()
-
-    #choose number of images to view
     if image_num_clicked.get() == "":
         image_num_clicked.set(list(image_num_dict.keys())[0])
-    image_num_dropdown = tk.OptionMenu(root, image_num_clicked, *image_num_dict)
-    image_num_dropdown.pack()
 
-    #start session
+    longest_time = max(len(word) for word in image_time_dict.keys())
+    longest_num = max(len(word) for word in image_num_dict.keys())
+    perfect_width = max(longest_time, longest_num)
+    image_time_dropdown = tk.OptionMenu(root, image_time_clicked, *image_time_dict)
+    image_time_dropdown.config(width=perfect_width, anchor="center")
+    image_time_dropdown.pack()
+    image_num_dropdown = tk.OptionMenu(root, image_num_clicked, *image_num_dict)
+    image_num_dropdown.config(width=perfect_width, anchor="center")
+    image_num_dropdown.pack(pady=5)
+
     start_session_button = tk.Button(root, text="Start Session", command=requirement_check, font=(FONT_TYPE, FONT_SIZE))
     start_session_button.pack()
-
 
 def requirement_check():
     global FOLDER_PATH,IMAGE_TIME,IMAGE_AMOUNT,FOLDER_IMAGES,SESSION_RUNNING
@@ -123,7 +135,7 @@ def requirement_check():
 
 
 def session_ui():
-    global which_image_label,current_image_label,central_frame,timer_label,end_session_button,TIME_LEFT
+    global which_image_label,current_image_label,central_frame,timer_label,TIME_LEFT
     for widget in root.winfo_children():
         widget.destroy()
     root.update()
@@ -148,7 +160,7 @@ def session_ui():
     end_session_button.place(relx=0.0,rely=0.0,anchor="nw",x=20,y=13)
 
 
-    timer_label=tk.Label(root,font=(FONT_TYPE, FONT_SIZE + 2))
+    timer_label=tk.Label(root,font=(FONT_TYPE, FONT_SIZE + 10))
     timer_label.place(relx=1.0,rely=0.0,anchor="ne",x=-20,y=15)
 
     timer()
@@ -179,8 +191,6 @@ def load_next_image():
         current_image_label.image = displayed_image
         INDEX+=1
 
-        TIME_LEFT=IMAGE_TIME-1
-
 def backward():
     global INDEX
     if INDEX>=2:
@@ -190,9 +200,11 @@ def backward():
         return
 
 def update_timer_ui():
-    minutes = int(TIME_LEFT / 60)
-    seconds = TIME_LEFT % 60
-    timer_label.config(text=f"{minutes:02}:{seconds:02}")
+    if SESSION_RUNNING:
+        minutes = int(TIME_LEFT / 60)
+        seconds = TIME_LEFT % 60
+        timer_label.config(text=f"{minutes:02}:{seconds:02}")
+    return
 
 def forward():
     global timer_label,TIME_LEFT

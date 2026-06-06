@@ -28,42 +28,42 @@ jobs:
         run: |
           pyinstaller --noconsole --collect-all customtkinter --name="Quick Sketcher" src/mainUI.py
 
-      # Windows: Zip the dist/QuickDraw folder
+      # Windows: Zip the dist/"Quick Sketcher" folder
       - name: Zip Windows Release
         if: matrix.os == 'windows-latest'
-        run: Compress-Archive -Path dist/QuickDraw -DestinationPath QuickDraw-Windows.zip
+        run: Compress-Archive -Path "dist/Quick Sketcher" -DestinationPath QuickSketcher-Windows.zip
 
       - name: Upload Windows Artifact
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: QuickDraw-Windows
-          path: QuickDraw-Windows.zip
+          name: QuickSketcher-Windows
+          path: QuickSketcher-Windows.zip
 
-      # Linux: Zip the dist/QuickDraw folder
+      # Linux: Zip the dist/"Quick Sketcher" folder
       - name: Zip Linux Release
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd dist
-          zip -r ../QuickDraw-Linux.zip QuickDraw
+          zip -r ../QuickSketcher-Linux.zip "Quick Sketcher"
 
       - name: Upload Linux Artifact
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: QuickDraw-Linux
-          path: QuickDraw-Linux.zip
+          name: QuickSketcher-Linux
+          path: QuickSketcher-Linux.zip
 
-      # macOS: Zip the dist/QuickDraw.app bundle
+      # macOS: Zip the dist/"Quick Sketcher.app" bundle
       - name: Zip macOS Release
         if: matrix.os == 'macos-latest'
         run: |
           cd dist
-          zip -r ../QuickDraw-Mac.zip QuickDraw.app
+          zip -r ../QuickSketcher-Mac.zip "Quick Sketcher.app"
 
       - name: Upload macOS Artifact
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: QuickDraw-MacOS
-          path: QuickDraw-Mac.zip
+          name: QuickSketcher-MacOS
+          path: QuickSketcher-Mac.zip

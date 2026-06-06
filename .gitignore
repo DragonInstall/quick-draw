@@ -1,11 +1,8 @@
-# Python Environments
-.venv/
-venv/
+build/
+dist/
+*.spec
 __pycache__/
 *.pyc
-
-# PyCharm Settings
+.venv/
 .idea/
-
-# Local Save Data
 save_path.txt

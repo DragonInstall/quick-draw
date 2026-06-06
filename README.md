@@ -9,16 +9,6 @@ Select a folder of reference images, set your session parameters, and start draw
 * Automatically remembers your last used image folder.
 * Scales images dynamically while maintaining aspect ratio.
 
-## How to Install and Run
-
-1. **Download the code:**
-   Click the green "Code" button at the top right of this page and select "Download ZIP", then extract the folder.
-   *(Alternatively, clone the repository via terminal).*
-
-2. **Open your terminal:**
-   Open your computer's terminal or command prompt and navigate inside the folder you just downloaded.
-
-3. **Install the required libraries:**
-   Copy and paste this command to install the necessary UI and image tools:
-   ```bash
-   pip install -r requirements.txt
+## How to Run
+1. Download and unzip the latest release.
+2. Open the folder and double-click `QuickDraw`.

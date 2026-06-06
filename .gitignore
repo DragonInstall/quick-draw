@@ -8,5 +8,4 @@ __pycache__/
 .idea/
 
 # Local Save Data
-src/save_path.txt
 save_path.txt

@@ -20,6 +20,7 @@ LOOP_ID=None
 FONT_SIZE=14
 FONT_TYPE= "Arial"
 SESSION_RUNNING=False
+RESET_CLOCK=False
 FOLDER_PATH= ""
 IMAGE_TIME=10
 IMAGE_AMOUNT=1
@@ -129,7 +130,7 @@ def session_ui():
     central_frame=tk.Frame(root)
     central_frame.pack(side="top", pady=10)
 
-    forward_button=tk.Button(central_frame, text=">>", command=image_loop, font=(FONT_TYPE, FONT_SIZE))
+    forward_button=tk.Button(central_frame, text=">>", command=forward, font=(FONT_TYPE, FONT_SIZE))
     forward_button.pack(side="right",padx=10)
 
     backward_button=tk.Button(central_frame, text="<<", command=backward, font=(FONT_TYPE, FONT_SIZE))
@@ -186,17 +187,23 @@ def backward():
     global INDEX
     if INDEX>=2:
         INDEX-=2
-        image_loop()
+        forward()
     else:
         return
 
 def forward():
+    global timer_label,RESET_CLOCK
+    image_loop()
+    RESET_CLOCK=True
     return
 
 def timer(time):
-    global timer_label
+    global timer_label,RESET_CLOCK
 
     if SESSION_RUNNING:
+        if RESET_CLOCK:
+            time=IMAGE_TIME-1
+            RESET_CLOCK=False
         minutes = int(time / 60)
         seconds = time % 60
         timer_label.config(text=f"{minutes:02}:{seconds:02}")

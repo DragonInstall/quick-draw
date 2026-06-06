@@ -16,13 +16,12 @@ central_frame = tk.Frame(root)
 central_frame.pack(side="top", pady=10)
 
 INDEX=0
-LOOP_ID=None
 FONT_SIZE=14
 FONT_TYPE= "Arial"
 SESSION_RUNNING=False
-RESET_CLOCK=False
 FOLDER_PATH= ""
 IMAGE_TIME=10
+TIME_LEFT=0
 IMAGE_AMOUNT=1
 FOLDER_IMAGES=[]
 
@@ -64,10 +63,11 @@ def get_folder():
     folder_label.config(text=f"{FOLDER_PATH}")
 
 def pre_session_ui():
-    global image_time_dict,image_num_dict,INDEX,folder_label,LOOP_ID,SESSION_RUNNING
+    global image_time_dict,image_num_dict,INDEX,folder_label,SESSION_RUNNING,TIME_LEFT
     SESSION_RUNNING=False
     for widget in root.winfo_children():
         widget.destroy()
+    TIME_LEFT=0
 
     #reset index for new session
     INDEX=0
@@ -79,12 +79,14 @@ def pre_session_ui():
     folder_label.pack()
 
     #choose view time per image
-    image_time_clicked.set(list(image_time_dict.keys())[0])
+    if image_time_clicked.get() == "":
+        image_time_clicked.set(list(image_time_dict.keys())[0])
     image_time_dropdown = tk.OptionMenu(root, image_time_clicked, *image_time_dict)
     image_time_dropdown.pack()
 
     #choose number of images to view
-    image_num_clicked.set(list(image_num_dict.keys())[0])
+    if image_num_clicked.get() == "":
+        image_num_clicked.set(list(image_num_dict.keys())[0])
     image_num_dropdown = tk.OptionMenu(root, image_num_clicked, *image_num_dict)
     image_num_dropdown.pack()
 
@@ -121,7 +123,7 @@ def requirement_check():
 
 
 def session_ui():
-    global which_image_label,current_image_label,central_frame,timer_label,end_session_button
+    global which_image_label,current_image_label,central_frame,timer_label,end_session_button,TIME_LEFT
     for widget in root.winfo_children():
         widget.destroy()
     root.update()
@@ -148,19 +150,14 @@ def session_ui():
 
     timer_label=tk.Label(root,font=(FONT_TYPE, FONT_SIZE + 2))
     timer_label.place(relx=1.0,rely=0.0,anchor="ne",x=-20,y=15)
-    img_time_copy=IMAGE_TIME-1
-    timer(img_time_copy)
-    image_loop()
+
+    timer()
 
 
-def image_loop():
-    global INDEX,IMAGE_TIME,current_image_label,which_image_label,FOLDER_IMAGES,LOOP_ID
-    delay= IMAGE_TIME * 1000
+def load_next_image():
+    global INDEX,IMAGE_TIME,current_image_label,which_image_label,FOLDER_IMAGES,TIME_LEFT
     if not SESSION_RUNNING:
         return
-    if LOOP_ID is not None:
-        root.after_cancel(LOOP_ID)
-    root.update_idletasks()
 
     max_width = root.winfo_width()-20
     max_height = root.winfo_height()-70
@@ -181,7 +178,8 @@ def image_loop():
         current_image_label .config( image=displayed_image)
         current_image_label.image = displayed_image
         INDEX+=1
-        LOOP_ID=root.after(delay, image_loop)
+
+        TIME_LEFT=IMAGE_TIME-1
 
 def backward():
     global INDEX
@@ -191,30 +189,32 @@ def backward():
     else:
         return
 
+def update_timer_ui():
+    minutes = int(TIME_LEFT / 60)
+    seconds = TIME_LEFT % 60
+    timer_label.config(text=f"{minutes:02}:{seconds:02}")
+
 def forward():
-    global timer_label,RESET_CLOCK
-    image_loop()
-    RESET_CLOCK=True
-    return
+    global timer_label,TIME_LEFT
+    TIME_LEFT = IMAGE_TIME
 
-def timer(time):
-    global timer_label,RESET_CLOCK
+    update_timer_ui()
+    load_next_image()
 
-    if SESSION_RUNNING:
-        if RESET_CLOCK:
-            time=IMAGE_TIME-1
-            RESET_CLOCK=False
-        minutes = int(time / 60)
-        seconds = time % 60
-        timer_label.config(text=f"{minutes:02}:{seconds:02}")
+def timer():
+    global TIME_LEFT, SESSION_RUNNING, timer_label
 
-        if time>0:
-            time-=1
-        else:
-            time=IMAGE_TIME-1
-        root.after(1000, timer,time)
-    else:
+    if not SESSION_RUNNING:
         return
+
+    if TIME_LEFT <= 0:
+        TIME_LEFT = IMAGE_TIME
+        load_next_image()
+
+    update_timer_ui()
+    TIME_LEFT -= 1
+
+    root.after(1000, timer)
 
 
 pre_session_ui()

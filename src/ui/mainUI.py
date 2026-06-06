@@ -1,11 +1,14 @@
 import os
 import random
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageOps
 
 # ---- ROOT ----
-root=tk.Tk()
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
+
+root=ctk.CTk()
 root.title("Quick Draw")
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
@@ -30,13 +33,13 @@ FOLDER_IMAGES=[]
 
 
 # ---- WIDGETS ----
-image_time_clicked = tk.StringVar()
-image_num_clicked = tk.StringVar()
-central_frame = tk.Frame(root)
-current_image_label = tk.Label(root)
-which_image_label = tk.Label(root)
-timer_label = tk.Label(root)
-folder_label = tk.Label(root)
+image_time_clicked = ctk.StringVar()
+image_num_clicked = ctk.StringVar()
+central_frame = ctk.CTkFrame(root, fg_color="transparent")
+current_image_label = ctk.CTkLabel(root)
+which_image_label = ctk.CTkLabel(root)
+timer_label = ctk.CTkLabel(root)
+folder_label = ctk.CTkLabel(root)
 
 # ---- DICTIONARIES ----
 image_time_dict={
@@ -70,7 +73,7 @@ def get_folder():
     temp_path = filedialog.askdirectory(title="Choose a folder")
     if temp_path != "":
         FOLDER_PATH = temp_path
-    folder_label.config(text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
+    folder_label.configure(text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
 
 
 def pre_session_ui():
@@ -83,28 +86,24 @@ def pre_session_ui():
     for widget in root.winfo_children():
         widget.destroy()
 
-    browse_button = tk.Button(root, text="Browse", command=get_folder, font=(FONT_TYPE, FONT_SIZE))
+    browse_button = ctk.CTkButton(root, text="Browse", command=get_folder, font=(FONT_TYPE, FONT_SIZE))
     browse_button.pack(pady=10)
 
-    folder_label = tk.Label(root, text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
-    folder_label.pack(pady=(0,10))
+    folder_label = ctk.CTkLabel(root, anchor="center", text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
+    folder_label.pack(pady=(0,20))
 
     if image_time_clicked.get() == "":
         image_time_clicked.set(list(image_time_dict.keys())[0])
     if image_num_clicked.get() == "":
         image_num_clicked.set(list(image_num_dict.keys())[0])
 
-    longest_time = max(len(word) for word in image_time_dict.keys())
-    longest_num = max(len(word) for word in image_num_dict.keys())
-    perfect_width = max(longest_time, longest_num)
-    image_time_dropdown = tk.OptionMenu(root, image_time_clicked, *image_time_dict)
-    image_time_dropdown.config(width=perfect_width, anchor="center")
-    image_time_dropdown.pack()
-    image_num_dropdown = tk.OptionMenu(root, image_num_clicked, *image_num_dict)
-    image_num_dropdown.config(width=perfect_width, anchor="center")
-    image_num_dropdown.pack(pady=5)
+    image_time_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_time_clicked,values=list(image_time_dict.keys()),width=120)
+    image_time_dropdown.pack(pady=(0, 5))
 
-    start_session_button = tk.Button(root, text="Start Session", command=requirement_check, font=(FONT_TYPE, FONT_SIZE))
+    image_num_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_num_clicked,values=list(image_num_dict.keys()),width=120)
+    image_num_dropdown.pack(pady=(0,20))
+
+    start_session_button = ctk.CTkButton(root, text="Start Session", command=requirement_check,width=200, font=(FONT_TYPE, int(FONT_SIZE*1.5)))
     start_session_button.pack()
 
 def requirement_check():
@@ -141,26 +140,26 @@ def session_ui():
     root.update()
 
     #build frames
-    central_frame=tk.Frame(root)
+    central_frame=ctk.CTkFrame(root, fg_color="transparent")
     central_frame.pack(side="top", pady=10)
 
-    forward_button=tk.Button(central_frame, text=">>", command=forward, font=(FONT_TYPE, FONT_SIZE))
+    forward_button=ctk.CTkButton(central_frame, text=">>", command=forward, font=(FONT_TYPE, FONT_SIZE))
     forward_button.pack(side="right",padx=10)
 
-    backward_button=tk.Button(central_frame, text="<<", command=backward, font=(FONT_TYPE, FONT_SIZE))
+    backward_button=ctk.CTkButton(central_frame, text="<<", command=backward, font=(FONT_TYPE, FONT_SIZE))
     backward_button.pack(side="left",padx=10)
 
-    which_image_label = tk.Label(central_frame, font=(FONT_TYPE, FONT_SIZE))
+    which_image_label = ctk.CTkLabel(central_frame, font=(FONT_TYPE, FONT_SIZE))
     which_image_label.pack(side="top", pady=5)
 
-    current_image_label = tk.Label(root)
+    current_image_label = ctk.CTkLabel(root)
     current_image_label.pack(expand=True)
 
-    end_session_button=tk.Button(root, text="End Session", command=pre_session_ui, font=(FONT_TYPE, FONT_SIZE))
+    end_session_button=ctk.CTkButton(root, text="End Session", command=pre_session_ui, font=(FONT_TYPE, FONT_SIZE))
     end_session_button.place(relx=0.0,rely=0.0,anchor="nw",x=20,y=13)
 
 
-    timer_label=tk.Label(root,font=(FONT_TYPE, FONT_SIZE + 10))
+    timer_label=ctk.CTkLabel(root,font=(FONT_TYPE, FONT_SIZE + 10))
     timer_label.place(relx=1.0,rely=0.0,anchor="ne",x=-20,y=15)
 
     timer()
@@ -180,16 +179,15 @@ def load_next_image():
         return
 
     else:
-        which_image_label.config(text=f"{INDEX + 1}/{len(FOLDER_IMAGES)}")
+        which_image_label.configure(text=f"{INDEX + 1}/{len(FOLDER_IMAGES)}")
 
         opened_image = Image.open(FOLDER_IMAGES[INDEX])
-        opened_image.thumbnail((max_width, max_height))
+        perfect_image = ImageOps.contain(opened_image, (max_width, max_height))
 
-        displayed_image = ImageTk.PhotoImage(image=ImageOps.contain(opened_image,(max_width,max_height)))
+        displayed_image = ctk.CTkImage(light_image=perfect_image, size=perfect_image.size)
+        current_image_label.configure(image=displayed_image, text="")
 
-        current_image_label .config( image=displayed_image)
-        current_image_label.image = displayed_image
-        INDEX+=1
+        INDEX += 1
 
 def backward():
     global INDEX
@@ -203,18 +201,18 @@ def update_timer_ui():
     if SESSION_RUNNING:
         minutes = int(TIME_LEFT / 60)
         seconds = TIME_LEFT % 60
-        timer_label.config(text=f"{minutes:02}:{seconds:02}")
+        timer_label.configure(text=f"{minutes:02}:{seconds:02}")
     return
 
 def forward():
-    global timer_label,TIME_LEFT
+    global TIME_LEFT
     TIME_LEFT = IMAGE_TIME
 
     update_timer_ui()
     load_next_image()
 
 def timer():
-    global TIME_LEFT, SESSION_RUNNING, timer_label
+    global TIME_LEFT, SESSION_RUNNING
 
     if not SESSION_RUNNING:
         return

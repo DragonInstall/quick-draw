@@ -9,8 +9,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    
+        # Fixed: Using macos-13 to ensure compatibility with Intel Macs
+        os: [ubuntu-latest, windows-latest, macos-13]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,9 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller -r requirements.txt
 
+      # Fixed: Building from the .spec file to embed Mac folder permissions
       - name: Build with PyInstaller
         run: |
-          pyinstaller --noconsole --collect-all customtkinter --name="Quick Sketcher" src/mainUI.py
+          pyinstaller "Quick Sketcher.spec"
 
       # Windows: Zip the dist/"Quick Sketcher" folder
       - name: Zip Windows Release
@@ -56,13 +58,13 @@ jobs:
 
       # macOS: Zip the dist/"Quick Sketcher.app" bundle
       - name: Zip macOS Release
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         run: |
           cd dist
           zip -r ../QuickSketcher-Mac.zip "Quick Sketcher.app"
 
       - name: Upload macOS Artifact
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         uses: actions/upload-artifact@v4
         with:
           name: QuickSketcher-MacOS

@@ -102,12 +102,18 @@ class QuickDrawApp(ctk.CTk):
     # ---- Settings Persist Management ----
 
     def get_folder(self):
-        """Opens a directory dialog for the user to select an image folder."""
-        temp_path = filedialog.askdirectory(title="Choose a folder")
+        temp_path = filedialog.askdirectory(parent=self, title="Choose a folder")
         if temp_path:
             self.folder_path = temp_path
             self.save_settings()
-            self.folder_label.configure(text=f"{self.folder_path}\n")
+
+            # Instantly count images so user knows it worked
+            try:
+                count = sum(1 for f in os.listdir(self.folder_path)
+                            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')) and not f.startswith('.'))
+                self.folder_label.configure(text=f"{self.folder_path}\n({count} images found)")
+            except OSError:
+                self.folder_label.configure(text=f"{self.folder_path}\n(Error reading folder)")
 
     def save_settings(self):
         """Saves current directory and user preferences to the config JSON file."""
@@ -226,7 +232,7 @@ class QuickDrawApp(ctk.CTk):
             return
 
         self.session_running = True
-        self.session_ui()
+        self.after(500, self.session_ui)
 
     def session_ui(self):
         """Builds the active slideshow layout and starts the timer."""
@@ -295,22 +301,29 @@ class QuickDrawApp(ctk.CTk):
         max_height = max(100, self.winfo_height() - 70)
 
         try:
-            # Look up in cache first to prevent disk and loading lag
-            if image_path in self._image_cache:
-                opened_image = self._image_cache[image_path]
-            else:
-                opened_image = Image.open(image_path)
-                # Keep cache small (max 10 items) to manage memory footprints
-                if len(self._image_cache) > 10:
-                    self._image_cache.pop(next(iter(self._image_cache)))
-                self._image_cache[image_path] = opened_image
+            # Create a unique key for the cache based on the file AND current window size
+            cache_key = f"{image_path}_{max_width}x{max_height}"
 
-            # Keep aspect ratio and fit image to label bounding box
-            perfect_image = ImageOps.contain(opened_image, (max_width, max_height))
-            displayed_image = ctk.CTkImage(
-                light_image=perfect_image, dark_image=perfect_image,
-                size=perfect_image.size
-            )
+            # Fast Cache Lookup: Check if we ALREADY resized this specific image for this window size
+            if cache_key in self._image_cache:
+                displayed_image = self._image_cache[cache_key]
+            else:
+                # 1. Open the image
+                opened_image = Image.open(image_path)
+
+                # 2. Use .thumbnail() - modifies in-place and is MUCH lighter/faster than ImageOps.contain
+                opened_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+                # 3. Create the CTkImage wrapper
+                displayed_image = ctk.CTkImage(
+                    light_image=opened_image, dark_image=opened_image,
+                    size=opened_image.size
+                )
+
+                # 4. Cache the small, lightweight UI element, NOT the massive original image
+                if len(self._image_cache) > 15:
+                    self._image_cache.pop(next(iter(self._image_cache)))
+                self._image_cache[cache_key] = displayed_image
 
             # Persist CTkImage reference to avoid Python garbage collection bugs
             self._current_ctk_image = displayed_image

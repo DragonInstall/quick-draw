@@ -191,7 +191,7 @@ def backward():
         return
 
 def forward():
-
+    return
 
 def timer(time):
     global timer_label

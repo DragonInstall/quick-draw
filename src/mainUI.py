@@ -42,6 +42,7 @@ class QuickDrawApp(ctk.CTk):
         self.FOLDER_PATH = ""
         self.FOLDER_IMAGES=[]
 
+
         # ---- CROSS-PLATFORM SAVE LOGIC ----
         if sys.platform == "darwin":
             # macOS: ~/Library/Application Support/QuickDraw/
@@ -57,6 +58,7 @@ class QuickDrawApp(ctk.CTk):
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
 
+        self.SAVE_FILE = os.path.join(base_dir, "quickdraw.json")
         self.load_settings()
 
         # ---- WIDGETS ----

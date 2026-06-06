@@ -43,27 +43,27 @@ folder_label = ctk.CTkLabel(root)
 
 # ---- DICTIONARIES ----
 image_time_dict={
-                 "10 seconds": 10,
-                 "30 seconds": 30,
-                 "1 minute"  : 60,
-                 "2 minutes" : 120,
-                 "5 minutes" : 300,
-                 "10 minutes": 600,
-                 "15 minutes": 900,
-                 "30 minutes": 1800,
-                 "1 hour"    : 3600,
+                 "10 Seconds": 10,
+                 "30 Seconds": 30,
+                 "1 Minute"  : 60,
+                 "2 Minutes" : 120,
+                 "5 Minutes" : 300,
+                 "10 Minutes": 600,
+                 "15 Minutes": 900,
+                 "30 Minutes": 1800,
+                 "1 Hour"    : 3600,
 }
 
 image_num_dict={
-                 "1 image"   :1,
-                 "10 images" :10,
-                 "15 images" :15,
-                 "20 images" :20,
-                 "30 images" :30,
-                 "40 images" :40,
-                 "50 images" :50,
-                 "60 images" :60,
-                 "120 images":120,
+                 "1 Image"   :1,
+                 "10 Images" :10,
+                 "15 Images" :15,
+                 "20 Images" :20,
+                 "30 Images" :30,
+                 "40 Images" :40,
+                 "50 Images" :50,
+                 "60 Images" :60,
+                 "120 Images":120,
 }
 
 
@@ -73,7 +73,7 @@ def get_folder():
     temp_path = filedialog.askdirectory(title="Choose a folder")
     if temp_path != "":
         FOLDER_PATH = temp_path
-    folder_label.configure(text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
+    folder_label.configure(text=f"{FOLDER_PATH}\n")
 
 
 def pre_session_ui():
@@ -89,18 +89,18 @@ def pre_session_ui():
     browse_button = ctk.CTkButton(root, text="Browse", command=get_folder, font=(FONT_TYPE, FONT_SIZE))
     browse_button.pack(pady=10)
 
-    folder_label = ctk.CTkLabel(root, anchor="center", text=f"{FOLDER_PATH}", font=(FONT_TYPE, FONT_SIZE))
-    folder_label.pack(pady=(0,20))
+    folder_label = ctk.CTkLabel(root, anchor="center", text=f"{FOLDER_PATH}\n", font=(FONT_TYPE, FONT_SIZE+2))
+    folder_label.pack(pady=(10,5))
 
     if image_time_clicked.get() == "":
         image_time_clicked.set(list(image_time_dict.keys())[0])
     if image_num_clicked.get() == "":
         image_num_clicked.set(list(image_num_dict.keys())[0])
 
-    image_time_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_time_clicked,values=list(image_time_dict.keys()),width=120)
+    image_time_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_time_clicked,values=list(image_time_dict.keys()),width=120,font=(FONT_TYPE, FONT_SIZE))
     image_time_dropdown.pack(pady=(0, 5))
 
-    image_num_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_num_clicked,values=list(image_num_dict.keys()),width=120)
+    image_num_dropdown = ctk.CTkOptionMenu(root,anchor="center",variable=image_num_clicked,values=list(image_num_dict.keys()),width=120,font=(FONT_TYPE, FONT_SIZE))
     image_num_dropdown.pack(pady=(0,20))
 
     start_session_button = ctk.CTkButton(root, text="Start Session", command=requirement_check,width=200, font=(FONT_TYPE, int(FONT_SIZE*1.5)))
@@ -143,13 +143,13 @@ def session_ui():
     central_frame=ctk.CTkFrame(root, fg_color="transparent")
     central_frame.pack(side="top", pady=10)
 
-    forward_button=ctk.CTkButton(central_frame, text=">>", command=forward, font=(FONT_TYPE, FONT_SIZE))
+    forward_button=ctk.CTkButton(central_frame, text=">>", command=forward, font=(FONT_TYPE, FONT_SIZE+5))
     forward_button.pack(side="right",padx=10)
 
-    backward_button=ctk.CTkButton(central_frame, text="<<", command=backward, font=(FONT_TYPE, FONT_SIZE))
+    backward_button=ctk.CTkButton(central_frame, text="<<", command=backward, font=(FONT_TYPE, FONT_SIZE+5))
     backward_button.pack(side="left",padx=10)
 
-    which_image_label = ctk.CTkLabel(central_frame, font=(FONT_TYPE, FONT_SIZE))
+    which_image_label = ctk.CTkLabel(central_frame, font=(FONT_TYPE, FONT_SIZE+5))
     which_image_label.pack(side="top", pady=5)
 
     current_image_label = ctk.CTkLabel(root)
@@ -162,11 +162,12 @@ def session_ui():
     timer_label=ctk.CTkLabel(root,font=(FONT_TYPE, FONT_SIZE + 10))
     timer_label.place(relx=1.0,rely=0.0,anchor="ne",x=-20,y=15)
 
+    # start the session
     timer()
 
 
 def load_next_image():
-    global INDEX,IMAGE_TIME,current_image_label,which_image_label,FOLDER_IMAGES,TIME_LEFT
+    global INDEX,current_image_label,which_image_label
     if not SESSION_RUNNING:
         return
 
@@ -212,8 +213,7 @@ def forward():
     load_next_image()
 
 def timer():
-    global TIME_LEFT, SESSION_RUNNING
-
+    global TIME_LEFT
     if not SESSION_RUNNING:
         return
 

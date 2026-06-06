@@ -1,4 +1,4 @@
-import os
+import os,sys
 import random
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -22,20 +22,52 @@ class QuickDrawApp(ctk.CTk):
         x = int((screen_width / 2) - (app_width / 2))
         y = int((screen_height / 2) - (app_height / 2))
         self.geometry(f"{app_width}x{app_height}+{x}+{y}")
+
+        # ---- FORCING WINDOW TO FRONT ----
         self.lift()
+        self.attributes('-topmost', True)
+        self.after(50, lambda: self.attributes('-topmost', False))
+        self.focus_force()
 
 
-        # ---- GLOBALS ----
+        # ---- VARIABLES ----
         self.INDEX=0
         self.FONT_SIZE=14
         self.FONT_TYPE= "Arial"
         self.SESSION_RUNNING=False
-        self.FOLDER_PATH= ""
         self.IMAGE_TIME=10
         self.TIME_LEFT=0
         self.IMAGE_AMOUNT=1
         self.FOLDER_IMAGES=[]
 
+        # ---- CROSS-PLATFORM PORTABLE SAVE LOGIC ----
+        if getattr(sys, 'frozen', False):
+            # Running as a compiled PyInstaller app (.exe or .app)
+            if sys.platform == 'darwin' and '.app' in sys.executable:
+                # Mac .app vault: go up 3 folders to get OUTSIDE the .app bundle
+                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.executable))))
+            else:
+                # Windows .exe or standard binary: save right next to the executable
+                base_dir = os.path.dirname(sys.executable)
+        else:
+            # Running as a normal Python script (e.g., from PyCharm)
+            # Go up one level from 'src' to the main project folder
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        self.SAVE_FILE = os.path.join(base_dir, "save_path.txt")
+
+        try:
+            with open(self.SAVE_FILE, "r+") as file:
+                self.FOLDER_PATH = file.read().strip()
+        except FileNotFoundError:
+            self.FOLDER_PATH = ""
+
+        # ---- LAST PATH LOADING LOGIC ----
+        try:
+            with open("save_path.txt", "r+") as file:
+                self.FOLDER_PATH = file.read().strip()
+        except FileNotFoundError:
+            self.FOLDER_PATH = ""
 
         # ---- WIDGETS ----
         self.image_time_clicked = ctk.StringVar()
@@ -77,7 +109,13 @@ class QuickDrawApp(ctk.CTk):
         temp_path = filedialog.askdirectory(title="Choose a folder")
         if temp_path != "":
             self.FOLDER_PATH = temp_path
+            self.save_settings()
         self.folder_label.configure(text=f"{self.FOLDER_PATH}\n")
+
+    def save_settings(self):
+        # save file path
+        with open("save_path.txt", "w+") as file:
+            file.write(self.FOLDER_PATH)
 
 
     def pre_session_ui(self):
@@ -170,8 +208,8 @@ class QuickDrawApp(ctk.CTk):
         if not   self.SESSION_RUNNING:
             return
 
-        max_width = self.winfo_width()-20
-        max_height = self.winfo_height()-70
+        max_width = max(100, self.winfo_width()-20)
+        max_height = max(100, self.winfo_height()-70)
 
         if   self.INDEX>=len(  self.FOLDER_IMAGES):
             messagebox.showinfo("Completion","Session has ended")

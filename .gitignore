@@ -1,0 +1,12 @@
+# Python Environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# PyCharm Settings
+.idea/
+
+# Local Save Data
+src/save_path.txt
+save_path.txt

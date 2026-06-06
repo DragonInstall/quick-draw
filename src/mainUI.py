@@ -1,5 +1,6 @@
 import os,sys
 import random
+import json
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageOps
@@ -38,29 +39,25 @@ class QuickDrawApp(ctk.CTk):
         self.IMAGE_TIME=10
         self.TIME_LEFT=0
         self.IMAGE_AMOUNT=1
+        self.FOLDER_PATH = ""
         self.FOLDER_IMAGES=[]
 
-        # ---- CROSS-PLATFORM PORTABLE SAVE LOGIC ----
-        if getattr(sys, 'frozen', False):
-            # Running as a compiled PyInstaller app (.exe or .app)
-            if sys.platform == 'darwin' and '.app' in sys.executable:
-                # Mac .app vault: go up 3 folders to get OUTSIDE the .app bundle
-                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.executable))))
-            else:
-                # Windows .exe or standard binary: save right next to the executable
-                base_dir = os.path.dirname(sys.executable)
+        # ---- CROSS-PLATFORM SAVE LOGIC ----
+        if sys.platform == "darwin":
+            # macOS: ~/Library/Application Support/QuickDraw/
+            base_dir = os.path.expanduser("~/Library/Application Support/QuickDraw")
+        elif sys.platform == "win32":
+            # Windows: %APPDATA%/QuickDraw/
+            base_dir = os.path.join(os.environ['APPDATA'], "QuickDraw")
         else:
-            # Running as a normal Python script (e.g., from PyCharm)
-            # Go up one level from 'src' to the main project folder
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            # Linux: ~/.local/share/QuickDraw/
+            base_dir = os.path.expanduser("~/.local/share/QuickDraw")
 
-        self.SAVE_FILE = os.path.join(base_dir, "save_path.txt")
+        # Create the folder if it doesn't exist
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
 
-        try:
-            with open(self.SAVE_FILE, "r+") as file:
-                self.FOLDER_PATH = file.read().strip()
-        except FileNotFoundError:
-            self.FOLDER_PATH = ""
+        self.load_settings()
 
         # ---- WIDGETS ----
         self.image_time_clicked = ctk.StringVar()
@@ -106,15 +103,22 @@ class QuickDrawApp(ctk.CTk):
         self.folder_label.configure(text=f"{self.FOLDER_PATH}\n")
 
     def save_settings(self):
+        data = {"folder_path": self.FOLDER_PATH}
         try:
-            with open(self.SAVE_FILE, "w+") as file:
-                file.write(self.FOLDER_PATH)
+            with open(self.SAVE_FILE, "w") as file:
+                json.dump(data, file)
         except Exception as e:
-            # FORCE THE ERROR TO SHOW ON SCREEN
-            error_message = f"Tried to save to:\n{self.SAVE_FILE}\n\nError:\n{e}"
-            messagebox.showerror("Debug Target", error_message)
-            self.lift()
+            messagebox.showerror("Error", f"Failed to save: {e}")
 
+    def load_settings(self):
+        if os.path.exists(self.SAVE_FILE):
+            try:
+                with open(self.SAVE_FILE, "r") as file:
+                    data = json.load(file)
+                    # Use .get() to avoid errors if the key is missing
+                    self.FOLDER_PATH = data.get("folder_path", "")
+            except Exception:
+                self.FOLDER_PATH = ""
 
     def pre_session_ui(self):
         self.SESSION_RUNNING = False
@@ -205,6 +209,8 @@ class QuickDrawApp(ctk.CTk):
     def load_next_image(self):
         if not   self.SESSION_RUNNING:
             return
+
+        self.update_idletasks()
 
         max_width = max(100, self.winfo_width()-20)
         max_height = max(100, self.winfo_height()-70)

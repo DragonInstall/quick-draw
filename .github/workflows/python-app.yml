@@ -26,11 +26,44 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          # This builds the folder-based app
-          pyinstaller --noconsole --name="QuickDraw" src/mainUI.py
+          pyinstaller --noconsole --collect-all customtkinter --name="QuickDraw" src/mainUI.py
 
-      - name: Upload Artifacts
+      # Windows: Zip the dist/QuickDraw folder
+      - name: Zip Windows Release
+        if: matrix.os == 'windows-latest'
+        run: Compress-Archive -Path dist/QuickDraw -DestinationPath QuickDraw-Windows.zip
+
+      - name: Upload Windows Artifact
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: QuickDraw-${{ matrix.os }}
-          path: dist/
+          name: QuickDraw-Windows
+          path: QuickDraw-Windows.zip
+
+      # Linux: Zip the dist/QuickDraw folder
+      - name: Zip Linux Release
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd dist
+          zip -r ../QuickDraw-Linux.zip QuickDraw
+
+      - name: Upload Linux Artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickDraw-Linux
+          path: QuickDraw-Linux.zip
+
+      # macOS: Zip the dist/QuickDraw.app bundle
+      - name: Zip macOS Release
+        if: matrix.os == 'macos-latest'
+        run: |
+          cd dist
+          zip -r ../QuickDraw-Mac.zip QuickDraw.app
+
+      - name: Upload macOS Artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickDraw-MacOS
+          path: QuickDraw-Mac.zip

@@ -62,13 +62,6 @@ class QuickDrawApp(ctk.CTk):
         except FileNotFoundError:
             self.FOLDER_PATH = ""
 
-        # ---- LAST PATH LOADING LOGIC ----
-        try:
-            with open("save_path.txt", "r+") as file:
-                self.FOLDER_PATH = file.read().strip()
-        except FileNotFoundError:
-            self.FOLDER_PATH = ""
-
         # ---- WIDGETS ----
         self.image_time_clicked = ctk.StringVar()
         self.image_num_clicked = ctk.StringVar()
@@ -113,9 +106,14 @@ class QuickDrawApp(ctk.CTk):
         self.folder_label.configure(text=f"{self.FOLDER_PATH}\n")
 
     def save_settings(self):
-        # save file path
-        with open("save_path.txt", "w+") as file:
-            file.write(self.FOLDER_PATH)
+        try:
+            with open(self.SAVE_FILE, "w+") as file:
+                file.write(self.FOLDER_PATH)
+        except Exception as e:
+            # FORCE THE ERROR TO SHOW ON SCREEN
+            error_message = f"Tried to save to:\n{self.SAVE_FILE}\n\nError:\n{e}"
+            messagebox.showerror("Debug Target", error_message)
+            self.lift()
 
 
     def pre_session_ui(self):

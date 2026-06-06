@@ -219,4 +219,6 @@ __marimo__/
 
 # idk some stuff
 .idea/
-.idea
+.DS_Store
+__pycache__/
+*.pyc

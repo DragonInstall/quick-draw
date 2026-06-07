@@ -67,7 +67,7 @@ jobs:
 
       - name: Zip macOS Release
         if: runner.os == 'macOS'
-        run: cd dist && zip -r ../QuickSketcher-MacOS.zip "Quick Sketcher.app"
+        run: zip -r QuickSketcher-MacOS.zip build/ dist/
 
       # -----------------------------------------------------------
       # UPLOAD (Grabbing all 3 Zips)

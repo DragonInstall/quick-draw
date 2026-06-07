@@ -30,23 +30,12 @@ jobs:
           pip install -r requirements.txt
 
       # -----------------------------------------------------------
-      # BUILD: WINDOWS & LINUX (PyInstaller + PySide6)
+      # BUILD (Unified PyInstaller for all OS)
       # -----------------------------------------------------------
-      - name: Build with PyInstaller (Win/Linux)
-        if: runner.os != 'macOS'
+      - name: Build with PyInstaller
         run: |
           pip install pyinstaller
-          # Bypassing the .spec file to guarantee a single file output
           pyinstaller --onefile --windowed src/quickDrawQT.py --name "Quick Draw"
-
-      # -----------------------------------------------------------
-      # BUILD: MACOS (py2app)
-      # -----------------------------------------------------------
-      - name: Build with py2app (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          pip install py2app
-          python setup.py py2app
 
       # -----------------------------------------------------------
       # PACKAGING (Creating the Zips)
@@ -64,7 +53,7 @@ jobs:
         run: cd dist && zip -r ../QuickDraw-MacOS.zip "Quick Draw.app"
 
       # -----------------------------------------------------------
-      # UPLOAD (Grabbing all 3 Zips)
+      # UPLOAD (Grabbing the Zips)
       # -----------------------------------------------------------
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

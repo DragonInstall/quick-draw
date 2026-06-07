@@ -43,7 +43,7 @@ jobs:
         run: |
           pip install pyinstaller
           # Bypassing the .spec file to guarantee a single file output
-          pyinstaller --onefile --windowed mainUI.py --name "Quick Sketcher"
+          pyinstaller --onefile --windowed src/mainUI.py --name "Quick Sketcher"
 
       # -----------------------------------------------------------
       # BUILD: MACOS (Raw py2app)

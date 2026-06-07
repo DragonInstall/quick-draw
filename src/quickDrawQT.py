@@ -262,7 +262,7 @@ class QuickDrawApp(QMainWindow):
         back_btn.clicked.connect(self.backward)
         top_bar.addWidget(back_btn)
 
-        self.which_image_label = QLabel(f" 1/{self.image_amount} ")
+        self.which_image_label = QLabel(f"1/{self.image_amount}")
         self.which_image_label.setFont(large_font)
         top_bar.addWidget(self.which_image_label)
 

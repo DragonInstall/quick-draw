@@ -8,9 +8,8 @@ from PIL import Image
 
 class QuickDrawApp(ctk.CTk):
     """
-    Quick Draw — A timed reference-image viewer for artists.
-    Allows selecting a folder, choosing interval times and image counts,
-    and runs a slideshow with automated timers and manual navigation controls.
+    An old version using Tkinter that is slow and laggy.
+    still usable.
     """
 
     # Class constants for configuration options

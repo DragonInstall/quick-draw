@@ -9,6 +9,11 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QFont
 
 class QuickDrawApp(QMainWindow):
+    """
+    New version of Quick Draw using PySide6.
+    Faster and better performing than quickDrawTk.py
+    """
+
     IMAGE_TIME_OPTIONS = {
         "10 Seconds": 10, "30 Seconds": 30, "1 Minute": 60,
         "2 Minutes": 120, "5 Minutes": 300, "10 Minutes": 600,
@@ -116,7 +121,6 @@ class QuickDrawApp(QMainWindow):
                 pass
 
     def clear_layout(self):
-        """Helper to clear the central layout cleanly in Qt."""
         while self.main_layout.count():
             item = self.main_layout.takeAt(0)
             if item is not None:
@@ -129,6 +133,7 @@ class QuickDrawApp(QMainWindow):
                         if sub_item is not None and sub_item.widget():
                             sub_item.widget().deleteLater()
                     item.layout().deleteLater()
+
 
     # ---- UI Layouts ----
 
@@ -287,7 +292,7 @@ class QuickDrawApp(QMainWindow):
     def start_session(self):
         self.load_next_image()
         self.update_timer_ui()
-        self.session_timer.start(1000) # Tick every 1000ms
+        self.session_timer.start(1000)
 
     # ---- Image Processing & Rendering ----
 
@@ -317,9 +322,8 @@ class QuickDrawApp(QMainWindow):
         if cache_key in self._image_cache:
             pixmap = self._image_cache[cache_key]
         else:
-            # Load and scale hardware-accelerated QPixmap
+            # Load and scale QPixmap
             pixmap = QPixmap(image_path)
-            # SmoothTransformation handles high-quality anti-aliasing
             pixmap = pixmap.scaled(max_width, max_height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self._image_cache[cache_key] = pixmap
 
@@ -377,7 +381,7 @@ class QuickDrawApp(QMainWindow):
 def main():
     app = QApplication(sys.argv)
 
-    # Optional: Force Qt to use dark mode if supported by the OS
+    # Force Qt to use dark mode if supported by the OS
     app.setStyle("Fusion")
 
     window = QuickDrawApp()

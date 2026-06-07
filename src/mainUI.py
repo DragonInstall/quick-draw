@@ -4,7 +4,7 @@ import random
 import json
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageOps
+from PIL import Image
 
 class QuickDrawApp(ctk.CTk):
     """

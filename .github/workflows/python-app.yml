@@ -8,7 +8,6 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      # FIX 1: Prevent one OS crash from killing the other builds
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13]
@@ -21,7 +20,6 @@ jobs:
         with:
           python-version: "3.10"
 
-      # FIX 2: Install Tkinter core libraries ONLY on the Ubuntu server
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -31,13 +29,31 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller -r requirements.txt
+          pip install -r requirements.txt
+
+      # -----------------------------------------------------------
+      # BUILD: WINDOWS & LINUX (PyInstaller)
+      # -----------------------------------------------------------
+      - name: Install PyInstaller (Win/Linux)
+        if: matrix.os != 'macos-13'
+        run: pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller "Quick Sketcher.spec"
+        if: matrix.os != 'macos-13'
+        run: pyinstaller "Quick Sketcher.spec"
 
-      # Windows: Zip the dist/"Quick Sketcher" folder
+      # -----------------------------------------------------------
+      # BUILD: MACOS (py2app)
+      # -----------------------------------------------------------
+      - name: Build with py2app (macOS)
+        if: matrix.os == 'macos-13'
+        run: |
+          pip install py2app
+          python setup.py py2app
+
+      # -----------------------------------------------------------
+      # PACKAGING & UPLOAD
+      # -----------------------------------------------------------
       - name: Zip Windows Release
         if: matrix.os == 'windows-latest'
         run: Compress-Archive -Path "dist/Quick Sketcher" -DestinationPath QuickSketcher-Windows.zip
@@ -49,7 +65,6 @@ jobs:
           name: QuickSketcher-Windows
           path: QuickSketcher-Windows.zip
 
-      # Linux: Zip the dist/"Quick Sketcher" folder
       - name: Zip Linux Release
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -63,7 +78,6 @@ jobs:
           name: QuickSketcher-Linux
           path: QuickSketcher-Linux.zip
 
-      # macOS: Zip the dist/"Quick Sketcher.app" bundle
       - name: Zip macOS Release
         if: matrix.os == 'macos-13'
         run: |

@@ -22,13 +22,13 @@ jobs:
           python-version: "3.10"
 
       # -----------------------------------------------------------
-      # LINUX / WINDOWS DEPENDENCIES
+      # LINUX UI DEPENDENCIES
       # -----------------------------------------------------------
       - name: Install System Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk python3-dev
+          sudo apt-get install -y python3-tk
 
       - name: Install Python dependencies
         run: |
@@ -36,40 +36,17 @@ jobs:
           pip install -r requirements.txt
 
       # -----------------------------------------------------------
-      # BUILD: WINDOWS & LINUX (PyInstaller)
+      # BUILD: WINDOWS & LINUX (Foolproof PyInstaller)
       # -----------------------------------------------------------
-      - name: Install PyInstaller (Win/Linux)
-        if: runner.os != 'macOS'
-        run: pip install pyinstaller
-
       - name: Build with PyInstaller (Win/Linux)
         if: runner.os != 'macOS'
-        run: pyinstaller "Quick Sketcher.spec"
-
-      # -----------------------------------------------------------
-      # LINUX: Create Universal AppImage
-      # -----------------------------------------------------------
-      - name: Create AppImage (Linux Only)
-        if: runner.os == 'Linux'
         run: |
-          mkdir -p AppDir/usr/bin
-          cp "dist/Quick Sketcher" AppDir/usr/bin/QuickSketcher
-          
-          echo "[Desktop Entry]
-          Type=Application
-          Name=Quick Sketcher
-          Exec=QuickSketcher
-          Icon=quicksketcher
-          Categories=Utility;" > AppDir/QuickSketcher.desktop
-          
-          touch AppDir/quicksketcher.png
-          
-          wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
-          chmod +x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage AppDir QuickSketcher-Linux.AppImage
+          pip install pyinstaller
+          # Bypassing the .spec file to guarantee a single file output
+          pyinstaller --onefile --windowed mainUI.py --name "Quick Sketcher"
 
       # -----------------------------------------------------------
-      # BUILD: MACOS (py2app)
+      # BUILD: MACOS (Raw py2app)
       # -----------------------------------------------------------
       - name: Build with py2app (macOS)
         if: runner.os == 'macOS'
@@ -78,25 +55,25 @@ jobs:
           python setup.py py2app
 
       # -----------------------------------------------------------
-      # PACKAGING: WINDOWS & MACOS
+      # PACKAGING (Creating the Zips)
       # -----------------------------------------------------------
       - name: Zip Windows Release
         if: runner.os == 'Windows'
         run: Compress-Archive -Path "dist\Quick Sketcher.exe" -DestinationPath QuickSketcher-Windows.zip
 
+      - name: Zip Linux Release
+        if: runner.os == 'Linux'
+        run: cd dist && zip -r ../QuickSketcher-Linux.zip "Quick Sketcher"
+
       - name: Zip macOS Release
         if: runner.os == 'macOS'
-        run: |
-          cd dist
-          zip -r ../QuickSketcher-MacOS.zip "Quick Sketcher.app"
+        run: cd dist && zip -r ../QuickSketcher-MacOS.zip "Quick Sketcher.app"
 
       # -----------------------------------------------------------
-      # UPLOAD ALL ARTIFACTS
+      # UPLOAD (Grabbing all 3 Zips)
       # -----------------------------------------------------------
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: QuickSketcher-${{ runner.os }}
-          path: |
-            QuickSketcher-*.zip
-            QuickSketcher-*.AppImage
+          path: QuickSketcher-*.zip

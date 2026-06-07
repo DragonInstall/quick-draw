@@ -37,7 +37,7 @@ jobs:
         run: |
           pip install pyinstaller
           # Bypassing the .spec file to guarantee a single file output
-          pyinstaller --onefile --windowed src/quickDrawQT.py --name "Quick Sketcher"
+          pyinstaller --onefile --windowed src/quickDrawQT.py --name "Quick Draw"
 
       # -----------------------------------------------------------
       # BUILD: MACOS (py2app)
@@ -53,15 +53,15 @@ jobs:
       # -----------------------------------------------------------
       - name: Zip Windows Release
         if: runner.os == 'Windows'
-        run: Compress-Archive -Path "dist\Quick Sketcher.exe" -DestinationPath QuickSketcher-Windows.zip
+        run: Compress-Archive -Path "dist\Quick Draw.exe" -DestinationPath QuickDraw-Windows.zip
 
       - name: Zip Linux Release
         if: runner.os == 'Linux'
-        run: cd dist && zip -r ../QuickSketcher-Linux.zip "Quick Sketcher"
+        run: cd dist && zip -r ../QuickDraw-Linux.zip "Quick Draw"
 
       - name: Zip macOS Release
         if: runner.os == 'macOS'
-        run: zip -r QuickSketcher-MacOS.zip build/ dist/
+        run: cd dist && zip -r ../QuickDraw-MacOS.zip "Quick Draw.app"
 
       # -----------------------------------------------------------
       # UPLOAD (Grabbing all 3 Zips)
@@ -69,5 +69,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuickSketcher-${{ runner.os }}
-          path: QuickSketcher-*.zip
+          name: QuickDraw-${{ runner.os }}
+          path: QuickDraw-*.zip

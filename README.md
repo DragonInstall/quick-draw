@@ -1,4 +1,4 @@
-# Quick Draw 🎨
+# Quick Sketcher 🎨
 
 A lightweight timer application for gesture drawing and art practice.  
 Select a folder of reference images, set your session parameters, and start drawing!
@@ -11,4 +11,4 @@ Select a folder of reference images, set your session parameters, and start draw
 
 ## How to Run
 1. Download and unzip the latest release.
-2. Open the folder and double-click `QuickDraw`.
+2. Open the folder and double-click `Quick Sketcher`.

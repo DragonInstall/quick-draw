@@ -22,31 +22,25 @@ jobs:
           python-version: "3.10"
 
       # -----------------------------------------------------------
-      # LINUX UI DEPENDENCIES
+      # DEPENDENCIES
       # -----------------------------------------------------------
-      - name: Install System Dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-tk
-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       # -----------------------------------------------------------
-      # BUILD: WINDOWS & LINUX (Foolproof PyInstaller)
+      # BUILD: WINDOWS & LINUX (PyInstaller + PySide6)
       # -----------------------------------------------------------
       - name: Build with PyInstaller (Win/Linux)
         if: runner.os != 'macOS'
         run: |
           pip install pyinstaller
           # Bypassing the .spec file to guarantee a single file output
-          pyinstaller --onefile --windowed src/mainUI.py --name "Quick Sketcher"
+          pyinstaller --onefile --windowed src/quickDrawQT.py --name "Quick Sketcher"
 
       # -----------------------------------------------------------
-      # BUILD: MACOS (Raw py2app)
+      # BUILD: MACOS (py2app)
       # -----------------------------------------------------------
       - name: Build with py2app (macOS)
         if: runner.os == 'macOS'

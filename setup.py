@@ -1,19 +1,20 @@
 from setuptools import setup
 
-APP = ['src/mainUI.py']
+APP = ['src/quickDrawQT.py']
 DATA_FILES = []
 # py2app options
 OPTIONS = {
-    'argv_emulation': False, # Keep False for Tkinter stability
-    'packages': ['customtkinter', 'PIL', 'tkinter'],
+    'argv_emulation': False,
+    'packages': ['PySide6'],
     'plist': {
         'CFBundleName': 'Quick Sketcher',
         'CFBundleDisplayName': 'Quick Sketcher',
-        'CFBundleGetInfoString': "Timed reference viewer",
-        'CFBundleIdentifier': "com.yourname.quicksketcher",
-        'CFBundleVersion': "1.0.0",
-        'CFBundleShortVersionString': "1.0.0",
+        'CFBundleExecutable': 'Quick Sketcher',
+        'CFBundlePackageType': 'APPL',
+        'LSMinimumSystemVersion': '12.0.0',
         'NSHighResolutionCapable': True,
+        'LSBackgroundOnly': False,
+        'LSUIElement': False
     }
 }
 

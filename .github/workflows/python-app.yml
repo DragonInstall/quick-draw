@@ -6,11 +6,12 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -20,8 +21,11 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Linux Dependencies
-        if: matrix.os == 'ubuntu-latest'
+      # -----------------------------------------------------------
+      # LINUX / WINDOWS DEPENDENCIES
+      # -----------------------------------------------------------
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-tk python3-dev
@@ -35,58 +39,64 @@ jobs:
       # BUILD: WINDOWS & LINUX (PyInstaller)
       # -----------------------------------------------------------
       - name: Install PyInstaller (Win/Linux)
-        if: matrix.os != 'macos-13'
+        if: runner.os != 'macOS'
         run: pip install pyinstaller
 
-      - name: Build with PyInstaller
-        if: matrix.os != 'macos-13'
+      - name: Build with PyInstaller (Win/Linux)
+        if: runner.os != 'macOS'
         run: pyinstaller "Quick Sketcher.spec"
+
+      # -----------------------------------------------------------
+      # LINUX: Create Universal AppImage
+      # -----------------------------------------------------------
+      - name: Create AppImage (Linux Only)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp "dist/Quick Sketcher" AppDir/usr/bin/QuickSketcher
+          
+          echo "[Desktop Entry]
+          Type=Application
+          Name=Quick Sketcher
+          Exec=QuickSketcher
+          Icon=quicksketcher
+          Categories=Utility;" > AppDir/QuickSketcher.desktop
+          
+          touch AppDir/quicksketcher.png
+          
+          wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage AppDir QuickSketcher-Linux.AppImage
 
       # -----------------------------------------------------------
       # BUILD: MACOS (py2app)
       # -----------------------------------------------------------
       - name: Build with py2app (macOS)
-        if: matrix.os == 'macos-13'
+        if: runner.os == 'macOS'
         run: |
           pip install py2app
           python setup.py py2app
 
       # -----------------------------------------------------------
-      # PACKAGING & UPLOAD
+      # PACKAGING: WINDOWS & MACOS
       # -----------------------------------------------------------
       - name: Zip Windows Release
-        if: matrix.os == 'windows-latest'
-        run: Compress-Archive -Path "dist/Quick Sketcher" -DestinationPath QuickSketcher-Windows.zip
-
-      - name: Upload Windows Artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: QuickSketcher-Windows
-          path: QuickSketcher-Windows.zip
-
-      - name: Zip Linux Release
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cd dist
-          zip -r ../QuickSketcher-Linux.zip "Quick Sketcher"
-
-      - name: Upload Linux Artifact
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: QuickSketcher-Linux
-          path: QuickSketcher-Linux.zip
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path "dist\Quick Sketcher.exe" -DestinationPath QuickSketcher-Windows.zip
 
       - name: Zip macOS Release
-        if: matrix.os == 'macos-13'
+        if: runner.os == 'macOS'
         run: |
           cd dist
-          zip -r ../QuickSketcher-Mac.zip "Quick Sketcher.app"
+          zip -r ../QuickSketcher-MacOS.zip "Quick Sketcher.app"
 
-      - name: Upload macOS Artifact
-        if: matrix.os == 'macos-13'
+      # -----------------------------------------------------------
+      # UPLOAD ALL ARTIFACTS
+      # -----------------------------------------------------------
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuickSketcher-MacOS
-          path: QuickSketcher-Mac.zip
+          name: QuickSketcher-${{ runner.os }}
+          path: |
+            QuickSketcher-*.zip
+            QuickSketcher-*.AppImage

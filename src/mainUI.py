@@ -52,7 +52,7 @@ class QuickDrawApp(ctk.CTk):
         self.time_left = 0
         self.image_amount = 1
         self.folder_path = ""
-        self.folder_images = []
+        self.session_playlist = []
 
         # Track last window size to manage resizing events
         self.last_width = 0
@@ -61,6 +61,7 @@ class QuickDrawApp(ctk.CTk):
         # References to prevent garbage collection and keep images loaded
         self._current_ctk_image = None
         self._timer_id = None
+        self._resize_timer = None
         self._image_cache = {}  # Caches original PIL.Image objects
 
         # ---- Save File Configuration ----
@@ -197,6 +198,7 @@ class QuickDrawApp(ctk.CTk):
         )
         start_session_button.pack()
 
+
     def requirement_check(self):
         """Checks folder validity and scans top-level files to set up the list of images."""
         if not self.folder_path:
@@ -206,23 +208,26 @@ class QuickDrawApp(ctk.CTk):
         self.save_settings()
 
         try:
-            image_files = []
-            # Scan only the top-level folder (non-recursively) for stability and speed
-            for f in os.listdir(self.folder_path):
-                full_path = os.path.join(self.folder_path, f)
-                if os.path.isfile(full_path) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-                    image_files.append(full_path)
+            # 1. Scan for valid images
+            valid_exts = ('.png', '.jpg', '.jpeg', '.webp')
+            found_images = [
+                os.path.join(self.folder_path, f) for f in os.listdir(self.folder_path)
+                if f.lower().endswith(valid_exts) and not f.startswith('.')
+            ]
 
-            if not image_files:
+            if not found_images:
                 messagebox.showerror("Error", "No images found in the selected folder.")
                 return
 
-            random.shuffle(image_files)
+            random.shuffle(found_images)
+
             self.image_amount = self.IMAGE_COUNT_OPTIONS[self.image_num_clicked.get()]
             self.image_time = self.IMAGE_TIME_OPTIONS[self.image_time_clicked.get()]
 
             # Repeat/wrap images if the folder contains fewer files than the requested amount
-            self.folder_images = [image_files[i % len(image_files)] for i in range(self.image_amount)]
+            self.session_playlist = [
+                found_images[i % len(found_images)] for i in range(self.image_amount)
+            ]
 
             # Clear image cache for the new session
             self._image_cache.clear()
@@ -232,7 +237,35 @@ class QuickDrawApp(ctk.CTk):
             return
 
         self.session_running = True
-        self.after(500, self.session_ui)
+        self.session_ui()
+
+    def get_cached_image(self, image_path, max_width, max_height):
+        """Fetches an image from cache, or loads it and manages memory capacity."""
+        cache_key = f"{image_path}_{max_width}x{max_height}"
+
+        # Fast return if already in memory
+        if cache_key in self._image_cache:
+            return self._image_cache[cache_key]
+
+        # Cache miss: Allocate memory and process the image
+        opened_image = Image.open(image_path)
+        opened_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+        displayed_image = ctk.CTkImage(
+            light_image=opened_image, dark_image=opened_image,
+            size=opened_image.size
+        )
+
+        # Store in dictionary
+        self._image_cache[cache_key] = displayed_image
+
+        # Memory Safety: Explicitly drop the oldest reference if we exceed the session size.
+        # This allows Python's garbage collector to instantly free the heap memory.
+        if len(self._image_cache) > self.image_amount:
+            self._image_cache.pop(next(iter(self._image_cache)))
+
+        return displayed_image
+
 
     def session_ui(self):
         """Builds the active slideshow layout and starts the timer."""
@@ -256,7 +289,8 @@ class QuickDrawApp(ctk.CTk):
         backward_button.pack(side="left", padx=10)
 
         self.which_image_label = ctk.CTkLabel(
-            self.central_frame, font=(self.font_type, self.font_size + 5)
+            self.central_frame, text=" ",
+            font=(self.font_type, self.font_size + 5)
         )
         self.which_image_label.pack(side="top", pady=5)
 
@@ -285,52 +319,35 @@ class QuickDrawApp(ctk.CTk):
     # ---- Image Processing & Rendering ----
 
     def load_next_image(self):
-        """Handles loading, caching, scaling, and display of current image in the list."""
+        """Updates the UI with the next image from the session playlist."""
         if not self.session_running:
             return
 
-        if self.index >= len(self.folder_images):
+        # End session if we hit the end of the generated playlist
+        if self.index >= len(self.session_playlist):
             messagebox.showinfo("Completion", "Session has ended")
             self.pre_session_ui()
             return
 
-        self.which_image_label.configure(text=f"{self.index + 1}/{len(self.folder_images)}")
+        self.which_image_label.configure(text=f"{self.index + 1}/{self.image_amount}")
 
-        image_path = self.folder_images[self.index]
+        image_path = self.session_playlist[self.index]
         max_width = max(100, self.winfo_width() - 20)
         max_height = max(100, self.winfo_height() - 70)
 
         try:
-            # Create a unique key for the cache based on the file AND current window size
-            cache_key = f"{image_path}_{max_width}x{max_height}"
+            # Request the image from the cache manager
+            displayed_image = self.get_cached_image(image_path, max_width, max_height)
 
-            # Fast Cache Lookup: Check if we ALREADY resized this specific image for this window size
-            if cache_key in self._image_cache:
-                displayed_image = self._image_cache[cache_key]
-            else:
-                # 1. Open the image
-                opened_image = Image.open(image_path)
-
-                # 2. Use .thumbnail() - modifies in-place and is MUCH lighter/faster than ImageOps.contain
-                opened_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-
-                # 3. Create the CTkImage wrapper
-                displayed_image = ctk.CTkImage(
-                    light_image=opened_image, dark_image=opened_image,
-                    size=opened_image.size
-                )
-
-                # 4. Cache the small, lightweight UI element, NOT the massive original image
-                if len(self._image_cache) > 15:
-                    self._image_cache.pop(next(iter(self._image_cache)))
-                self._image_cache[cache_key] = displayed_image
-
-            # Persist CTkImage reference to avoid Python garbage collection bugs
+            # Keep a hard reference to prevent the UI from flickering
             self._current_ctk_image = displayed_image
+
             self.current_image_label.configure(image=displayed_image, text="")
+            self.current_image_label.pack(expand=True)
 
         except (OSError, Image.UnidentifiedImageError) as e:
             self.current_image_label.configure(image=None, text="Error loading image")
+            self.current_image_label.pack(expand=True)
             print(f"Failed to load {image_path}: {e}")
 
     # ---- Navigation & Control Events ----
@@ -387,14 +404,22 @@ class QuickDrawApp(ctk.CTk):
         self._timer_id = self.after(1000, self.timer)
 
     def on_resize(self, event):
-        """Redraws/scales the current image when the window size changes."""
+        """Detects resize events but waits for them to stop before redrawing."""
         if event.widget == self and self.session_running:
-            current_width = self.winfo_width()
-            current_height = self.winfo_height()
-            if current_width != self.last_width or current_height != self.last_height:
-                self.last_width = current_width
-                self.last_height = current_height
-                self.load_next_image()
+            # Cancel the previous timer if it exists (user is still dragging)
+            if self._resize_timer is not None:
+                self.after_cancel(self._resize_timer)
+            # Set a new timer to execute the heavy lifting after 200ms of inactivity
+            self._resize_timer = self.after(200, self._perform_resize)
+
+    def _perform_resize(self):
+        """Actually redraws/scales the current image after resizing finishes."""
+        current_width = self.winfo_width()
+        current_height = self.winfo_height()
+        if current_width != self.last_width or current_height != self.last_height:
+            self.last_width = current_width
+            self.last_height = current_height
+            self.load_next_image()
 
     def force_focus(self):
         """Forces the application window to the foreground on startup."""
